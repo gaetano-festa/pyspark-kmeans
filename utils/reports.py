@@ -154,12 +154,12 @@ def generate_email(_sender, _recipient, _subject, _body, _attachment_path=None):
     message["Subject"] = _subject
     message.set_content(_body)
     
-    # Process the attachment and add it to the email
-    attachment_filename = os.path.basename(_attachment_path)
-    mime_type, _ = mimetypes.guess_type(_attachment_path)
-    mime_type, mime_subtype = mime_type.split('/', 1)
-    
     if _attachment_path is not None:
+        # Process the attachment and add it to the email
+        attachment_filename = os.path.basename(_attachment_path)
+        mime_type, _ = mimetypes.guess_type(_attachment_path)
+        mime_type, mime_subtype = mime_type.split('/', 1)
+    
         try:
             with open(_attachment_path, 'rb') as ap:
                 message.add_attachment(ap.read(),
@@ -177,3 +177,4 @@ def send_email(message):
     mail_server = smtplib.SMTP('localhost')
     mail_server.send_message(message)
     mail_server.quit()
+

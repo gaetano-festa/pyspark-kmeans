@@ -27,43 +27,23 @@ def load_data():
     
     users = spark.read.load('data/users.csv', format='csv',schema=users_schema, header=True)
 
-    #users.printSchema()
-    
-    #print('Latest date:')
-    #users.select(F.to_date(F.max(F.date_trunc('day', 'timestamp')))).show()
-    
-    
     users = users.withColumn('age', F.datediff(F.to_date(F.lit('2016-06-16'), 'yyyy-mm-dd'), users.dob)/365)
     
     ages = users.select(['userId', 'age'])
-    #ages.show()
-
     
     buy_click = spark.read.load('data/buy-clicks.csv', format='csv',inferSchema=True, header=True, timestampFormat="yyyy-MM-dd HH:mm:ss")
-    
-    #buy_click.printSchema()
-    
     
     revenue_by_session_by_user = buy_click.groupBy(['userId', 'userSessionId']).agg(F.sum('price').alias('revenue')).select(['userId', 'revenue'])
     revenues=revenue_by_session_by_user.groupBy('userId').agg(F.mean('revenue').alias('avg_buy'), F.min('revenue')\
             .alias('min_buy'), F.max('revenue').alias('max_buy'))
-    #revenues.show()
-    
 
     game_click = spark.read.load('data/game-clicks.csv', format='csv',inferSchema=True, header=True, timestampFormat="yyyy-MM-dd HH:mm:ss")
-    
-    #game_click.printSchema()
-    
     
     avg_ishit = game_click.groupBy(['userId']).agg(F.mean('isHit').alias('avg_isHit'))
     
     user_session = spark.read.load('data/user-session.csv', format='csv',inferSchema=True, header=True, timestampFormat="yyyy-MM-dd HH:mm:ss")
-
-    #user_session.printSchema()
     
     team = spark.read.load('data/team.csv', format='csv',inferSchema=True, header=True, timestampFormat="yyyy-MM-dd HH:mm:ss")
-    #team.printSchema()
-    
     
     strengths = team.join(user_session, on='teamId', how='inner').select(['userId', 'strength']).dropDuplicates()
     
@@ -94,8 +74,8 @@ def prepare_data():
     scaler_model = scaler.fit(assembled)
     scaled_data = scaler_model.transform(assembled)
 
-
     return scaled_data, features
+
 
 def kmeans_scan(_data, _k_min = 2, _k_max = 6, _tmp_dir = 'tmp_models'):
     """Scan different kmeans model within the specified k range.
@@ -129,7 +109,6 @@ def kmeans_scan(_data, _k_min = 2, _k_max = 6, _tmp_dir = 'tmp_models'):
     return centers, silhuette_scores
 
 
-
 def save_clustering_results(_output_file, _centers, _scores, _feature_names):
     """Save the cluster centers and Silhuette scores for the different k.
        These data will be use to choose the optimal k.
@@ -149,7 +128,6 @@ def save_clustering_results(_output_file, _centers, _scores, _feature_names):
             centers_list = [c.tolist() for c in v]
             for center in centers_list:
                 writer.writerow([k] + [_scores[k]] + center)
-
 
 
 def load_kmeans_model(_model_dir):
